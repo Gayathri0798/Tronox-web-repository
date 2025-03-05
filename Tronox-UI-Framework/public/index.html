@@ -76,7 +76,7 @@
             errorContainer.style.display = "none";
             testIframe.srcdoc = "";
 
-            fetch("http://localhost:3001/run-test")
+            fetch("http://34.100.220.123:3001/run-test")
                 .then(response => response.text())  
                 .then(data => {
                     loading.style.display = "none";
