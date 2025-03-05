@@ -20,7 +20,16 @@ if (!fs.existsSync(DOCUMENTS_FOLDER)) {
 }
 // Serve documents folder for downloads
 app.use("/documents", express.static(DOCUMENTS_FOLDER));
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+
+  origin: 'http://34.100.220.123:3001',
+
+  credentials: true
+
+}));
+
+
 app.use(bodyParser.json());
 // Fix __dirname in ES Module
 const __filename = fileURLToPath(import.meta.url);
