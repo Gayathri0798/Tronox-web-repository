@@ -9,20 +9,44 @@
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 50px;
-        }
-        iframe {
-            width: 80%;
-            height: 600px;
-            margin-top: 20px;
-            border: 1px solid #ccc;
+            background-color: #f4f4f4;
         }
         button {
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 12px 24px;
+            font-size: 18px;
             background-color: #007bff;
             color: white;
             border: none;
             cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #loading {
+            display: none;
+            font-size: 16px;
+            color: #333;
+            margin-top: 20px;
+        }
+        #iframeContainer {
+            display: none;
+            margin-top: 20px;
+        }
+        iframe {
+            width: 90%;
+            height: 600px;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        #errorContainer {
+            display: none;
+            color: red;
+            font-weight: bold;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -30,21 +54,40 @@
 
     <h1>Run WDIO Test</h1>
     <button onclick="runTest()">Run Test</button>
+    <p id="loading">Running test... Please wait.</p>
 
-    <div id="iframeContainer" style="display: none;">
+    <div id="errorContainer"></div>
+
+    <div id="iframeContainer">
         <h2>Test Output</h2>
         <iframe id="testIframe"></iframe>
     </div>
 
     <script>
         function runTest() {
-            fetch('/run-test')
-                .then(response => response.json())
+            const loading = document.getElementById("loading");
+            const iframeContainer = document.getElementById("iframeContainer");
+            const errorContainer = document.getElementById("errorContainer");
+            const testIframe = document.getElementById("testIframe");
+
+            // Show loading indicator and reset previous results
+            loading.style.display = "block";
+            iframeContainer.style.display = "none";
+            errorContainer.style.display = "none";
+            testIframe.srcdoc = "";
+
+            fetch("http://localhost:3001/run-test")
+                .then(response => response.text())  
                 .then(data => {
-                    document.getElementById('testIframe').src = data.url;
-                    document.getElementById('iframeContainer').style.display = "block";
+                    loading.style.display = "none";
+                    iframeContainer.style.display = "block";
+                    testIframe.srcdoc = `<pre>${data}</pre>`;
                 })
-                .catch(error => console.error("Error running test:", error));
+                .catch(error => {
+                    loading.style.display = "none";
+                    errorContainer.style.display = "block";
+                    errorContainer.innerHTML = `Error running test: ${error.message}`;
+                });
         }
     </script>
 

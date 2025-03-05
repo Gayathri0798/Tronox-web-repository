@@ -82,10 +82,23 @@ function runScript(req, res) {
   });
 }
 // Route to trigger the test case
-app.post("/run-test", (req, res) => {
-  // Run the test case using a child process
-  runScript(req, res);
+app.get("/run-test", (req, res) => {
+  console.log("Received request to run test...");
+
+  // Replace `npm run wdio` with your actual test command
+  exec("npm run wdio", (error, stdout, stderr) => {
+      if (error) {
+          console.error(`Error executing test: ${error.message}`);
+          res.status(500).send(`Error: ${error.message}`);
+          return;
+      }
+      if (stderr) {
+          console.error(`Test stderr: ${stderr}`);
+      }
+      res.send(`<pre>${stdout || stderr}</pre>`);
+  });
 });
+
 
 // Load tiles from JSON file
 app.get("/api/tiles", verifyToken, (req, res) => {
@@ -239,17 +252,35 @@ app.post(
       res.write("Error: No file uploaded\n");
       return res.end();
     }
+    console.log("Received request body:", req.body);
+    let { testName } = req.body; // Get test name from frontend
 
-    const { testName } = req.body; // Get the test name from the frontend
+
+    // 🔴 DEBUGGING LOGS - CHECKING THE TEST NAME
+    console.log("Received testName:", testName);
+    res.write(`Received testName: ${testName}\n`);
 
     if (!testName) {
       res.write("Error: No test name provided\n");
       return res.end();
     }
 
-    try {
-      res.write("Processing uploaded file...\n");
+    testName = testName.trim().replace(/\s+/g, "_"); // Sanitize test name
 
+    const testSpecPath = path.join(__dirname, "test/specs", `${testName}.js`);
+
+    // 🔴 DEBUGGING LOGS - CHECK IF TEST FILE EXISTS
+    console.log("Checking for test file:", testSpecPath);
+    res.write(`Checking for test file: ${testSpecPath}\n`);
+
+    if (!fs.existsSync(testSpecPath)) {
+      res.write(`Error: Test file not found - ${testSpecPath}\n`);
+      return res.end();
+    }
+
+    res.write(`Processing uploaded file for test: ${testName}\n`);
+
+    try {
       const workbook = xlsx.readFile(req.file.path);
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
@@ -261,6 +292,7 @@ app.post(
         header: 1,
         defval: null,
       });
+
       const result = {};
       const processedColumns = new Set();
 
@@ -297,11 +329,10 @@ app.post(
       res.write("File processing completed.\n");
 
       const jsonString = JSON.stringify(result, null, 2);
-      const filePath =
-        "C:\\Tronox-UI-Repo\\Tronox-UI-Framework\\test\\Data\\Tronox\\Physicalinventory.json";
-      res.write("\n");
-      res.write(jsonString);
-      res.write("\n");
+      const filePath = path.join(
+        __dirname,
+        "./test/Data/Tronox/Physicalinventory.json"
+      );
 
       fs.writeFile(filePath, jsonString, "utf8", (err) => {
         if (err) {
@@ -311,13 +342,12 @@ app.post(
 
         res.write("File successfully written. Starting test execution...\n");
 
-        // Construct the dynamic command using the test name from the frontend
-        const testSpecPath = `./test/specs/${testName}.js`;
-        const command = `npx wdio run ./wdio.conf.js --spec ${testSpecPath}`;
-
+        // 🔴 DEBUGGING LOG - CHECK THE FINAL COMMAND
+        const command = `npx wdio run ./wdio.conf.js --spec "./test/specs/${testName}.js"`;
+        console.log("Executing command:", command);
         res.write(`Executing command: ${command}\n`);
 
-        const testProcess = exec(command);
+        const testProcess = exec(command, { shell: true });
 
         testProcess.stdout.on("data", (data) => {
           res.write(`Test Output: ${data}`);
@@ -338,6 +368,9 @@ app.post(
     }
   }
 );
+
+
+
 
 app.post("/testcase-results", verifyToken, async (req, res) => {
   const rawData = fs.readFileSync(resultsFilePath, "utf-8");
