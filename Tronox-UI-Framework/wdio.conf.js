@@ -63,9 +63,6 @@ export const config = {
     //
     capabilities: [{
         browserName: 'chrome',
-        'goog:chromeOptions': {
-            args: ['--user-data-dir=/tmp/chrome-profile-unique']
-        }
     }],
 
     //
