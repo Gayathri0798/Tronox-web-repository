@@ -29,7 +29,8 @@ export const config = {
     //
     specs: [
         // './test/specs/**/*.js'
-        `./test/specs/${global.wdioEnvParameters.config.appNamespec}.js`
+        // `./test/specs/${global.wdioEnvParameters.config.appNamespec}.js`
+        `./test/specs/Tronox_MTS.e2e.js`
         // './test/specs/login.e2enew.js'
         // './test/specs/Jamaica.e2e.js'
         // './test/specs/elements.e2e.js'
@@ -63,9 +64,9 @@ export const config = {
     capabilities: [{
         browserName: 'chrome',
         'goog:chromeOptions': {
-          args: ['--user-data-dir=/tmp/chrome-profile']
+            args: []
         }
-      }],
+    }],
 
     //
     // ===================
